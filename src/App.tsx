@@ -30,7 +30,7 @@ const getAIResponse = (userMessage: string): string => {
   
   // Simple response based on message content
   if (userMessage.toLowerCase().includes("hello") || userMessage.toLowerCase().includes("hi")) {
-    return "Hello! Welcome Elakkia, How can I assist you today?";
+    return "Hello! How can I assist you today?";
   }
   
   if (userMessage.toLowerCase().includes("help")) {
