@@ -4,11 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'ChatBot' # Trigger only for changes in Project A's directory
+      - './ChatBot/**' # Trigger only for changes in Project A's directory
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'ChatBot' # Trigger only for changes in Project A's directory
+      - './ChatBot/**' # Trigger only for changes in Project A's directory
   workflow_dispatch: # Allows manual triggering
 
 jobs:
