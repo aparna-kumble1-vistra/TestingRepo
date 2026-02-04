@@ -6,14 +6,14 @@ on:
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'ChatBot/**' # Trigger only for changes in Project A's directory
+      - 'ChatBot' # Trigger only for changes in Project A's directory
   workflow_dispatch: # Allows manual triggering
 
 jobs:
   call-build:
     uses: ./.github/workflows/reusable-build.yml # Reference local reusable workflow
     with:
-      project-path: './ChatBot/**' # Pass the specific project path
+      project-path: 'ChatBot' # Pass the specific project path
     # secrets:
       # Use secrets: inherit if you want all caller secrets passed down, 
       # or list specific secrets:
