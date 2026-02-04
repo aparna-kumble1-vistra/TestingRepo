@@ -6,14 +6,14 @@ on:
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'NextJsProject/**' # Trigger only for changes in Project A's directory
+      - 'NextJsProject' # Trigger only for changes in Project A's directory
   workflow_dispatch: # Allows manual triggering
 
 jobs:
   call-build:
     uses: ./.github/workflows/reusable-build.yml # Reference local reusable workflow
     with:
-      project-path: './NextJsProject/**' # Pass the specific project path
+      project-path: 'NextJsProject' # Pass the specific project path
     # secrets:
       # Use secrets: inherit if you want all caller secrets passed down, 
       # or list specific secrets:
