@@ -4,18 +4,18 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'Vsearch/**' # Trigger only for changes in Project A's directory
+      - 'TestPythonProject/**' # Trigger only for changes in Project A's directory
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'Vsearch/**' # Trigger only for changes in Project A's directory
+      - 'TestPythonProject/**' # Trigger only for changes in Project A's directory
   workflow_dispatch: # Allows manual triggering
 
 jobs:
   call-build:
     uses: ./.github/workflows/reusable-build.yml # Reference local reusable workflow
     with:
-      project-path: 'Vsearch' # Pass the specific project path
+      project-path: 'TestPythonProject' # Pass the specific project path
     # secrets:
       # Use secrets: inherit if you want all caller secrets passed down, 
       # or list specific secrets:
