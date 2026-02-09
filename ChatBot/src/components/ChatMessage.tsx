@@ -29,10 +29,10 @@ export function ChatMessage({
     }
   };
 
-  const toggleSource = (index: string) => {
+  const toggleSource = (id: string) => {
     setExpandedSources((prev) => ({
       ...prev,
-      [index]: !prev[index],
+      [id]: !prev[id],
     }));
   };
 
@@ -45,18 +45,26 @@ export function ChatMessage({
 
   // Helper to parse the raw sources string into structured objects
   const parseSources = (text: string) => {
-    // Splits by the separator "---" we added in App.tsx
-    return text.split("---").filter(s => s.trim()).map(s => {
-      const lines = s.trim().split("\n");
-      const titleLine = lines[0]; // e.g. **[1] Title**
-      const clickLine = lines[1]; // *Click to view...*
-      const detailLines = lines.slice(2).join("\n");
-      
-      const idMatch = titleLine.match(/\[(.*?)\]/);
-      const id = idMatch ? idMatch[1] : Math.random().toString();
-      
-      return { id, title: titleLine, details: detailLines };
-    });
+    return text
+      .split("---")
+      .map((s) => s.trim())
+      // FILTER: Only allow blocks that actually contain a bracketed ID and meaningful text
+      // This stops stray characters like "|", "-", or "--" from appearing as cards
+      .filter((s) => s.includes("[") && s.length > 10)
+      .map((s) => {
+        const lines = s.split("\n").map(l => l.trim()).filter(l => l !== "");
+        const titleLine = lines[0] || "";
+        
+        // Skip the first two lines (Title and "Click to view...") to get the body
+        const detailLines = lines.slice(2).join("\n");
+        
+        const idMatch = titleLine.match(/\[(.*?)\]/);
+        const id = idMatch ? idMatch[1] : Math.random().toString();
+        
+        return { id, title: titleLine, details: detailLines };
+      })
+      // Final safety check: Don't render if there's no body text
+      .filter((source) => source.details.trim().length > 0);
   };
 
   const sourceItems = parseSources(sourcesRaw);
@@ -74,7 +82,7 @@ export function ChatMessage({
           {isUser ? "You" : "Genie Finance Assistance"}
         </div>
 
-        {/* Main Content with Markdown/Table Support */}
+        {/* Main Content */}
         <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {mainAnswer}
@@ -91,15 +99,18 @@ export function ChatMessage({
             
             <div className="space-y-3">
               {sourceItems.map((source) => (
-                <div key={source.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                <div key={source.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:border-blue-200 transition-colors">
                   <button
                     onClick={() => toggleSource(source.id)}
                     className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
                   >
                     <span className="text-sm font-medium text-blue-700 leading-tight">
-                      <ReactMarkdown className="inline-markdown" remarkPlugins={[remarkGfm]}>
-                        {source.title}
-                      </ReactMarkdown>
+                      {/* Fixed: Wrapped ReactMarkdown in a span to avoid className error */}
+                      <span className="inline-markdown">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {source.title}
+                        </ReactMarkdown>
+                      </span>
                     </span>
                     {expandedSources[source.id] ? (
                       <ChevronUp className="w-4 h-4 text-gray-400" />
