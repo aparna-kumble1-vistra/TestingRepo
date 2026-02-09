@@ -18,90 +18,91 @@ interface Session {
   messages: Message[];
 }
 
-// Simulated AI responses for demo purposes
-const getAIResponse = (userMessage: string): string => {
-  const responses = [
-    "That's an interesting question! Let me help you with that.",
-    "I understand what you're asking. Here's what I think...",
-    "Based on your input, I can provide some insights.",
-    "Great question! Let me break this down for you.",
-    "I'd be happy to assist you with that.",
-  ];
-  
-  // Simple response based on message content
-  if (userMessage.toLowerCase().includes("hello") || userMessage.toLowerCase().includes("hi")) {
-    return "Hello! Welcome Elakkia, How can I assist you today?";
-  }
-  
-  if (userMessage.toLowerCase().includes("help")) {
-    return "I'm here to help! You can ask me anything, and I'll do my best to provide useful information. Feel free to start a new session anytime using the button in the sidebar.";
-  }
-  
-  return `${responses[Math.floor(Math.random() * responses.length)]}\n\nYou mentioned: "${userMessage}"\n\nThis is a demo response. In a real application, this would be replaced with actual AI-generated content based on your message.`;
-};
-
 export default function App() {
   const [sessions, setSessions] = useState<Session[]>([
     {
-      id: "1",
-      title: "Welcome Chat",
+      id: "17b95deab85984ce",
+      title: "Finance Assistance",
       timestamp: new Date(),
       messages: [
         {
-          id: "1-1",
+          id: "welcome-1",
           role: "assistant",
-          content: "Hello! I'm your AI assistant. How can I help you today?",
+          content: "Hello! I am your Genie Finance Assistant. How can I help you today?",
         },
       ],
     },
   ]);
-  
-  const [currentSessionId, setCurrentSessionId] = useState("1");
+
+  const [currentSessionId, setCurrentSessionId] = useState("17b95deab85984ce");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentSession = sessions.find((s) => s.id === currentSessionId);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentSession?.messages, isTyping]);
 
   const handleNewSession = () => {
+    const newId = Math.random().toString(16).substring(2, 18);
     const newSession: Session = {
-      id: Date.now().toString(),
-      title: `New Chat ${sessions.length + 1}`,
+      id: newId,
+      title: `New Analysis`,
       timestamp: new Date(),
       messages: [
         {
           id: `${Date.now()}-1`,
           role: "assistant",
-          content: "Hello! I'm your AI assistant. How can I help you today?",
+          content: "How can I help you today?",
         },
       ],
     };
-    
     setSessions([newSession, ...sessions]);
-    setCurrentSessionId(newSession.id);
+    setCurrentSessionId(newId);
   };
 
   const handleSelectSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
   };
 
+  const formatChatbotOutput = (data: any) => {
+    const mainMessage = data.output?.message || "";
+    const sources = data.output?.sources || {};
+    
+    const validSourceEntries = Object.entries(sources).filter(
+      ([_, source]: [string, any]) => source.text && source.text.trim().length > 0
+    );
+
+    let formatted = `${mainMessage}`;
+
+    if (validSourceEntries.length > 0) {
+      formatted += `\n\n**Related Documents:**\n`;
+
+      validSourceEntries.forEach(([key, source]: [string, any]) => {
+        formatted += `\n**[${key}] ${source.source_file_title || 'Document'}**\n`;
+        formatted += `*Click to view citation details*\n`;
+        formatted += `${source.text}\n`;
+        formatted += `---`; 
+      });
+    }
+
+    return formatted;
+  };
+
   const handleSendMessage = async (message: string) => {
     if (!currentSession) return;
 
+    const targetSessionId = currentSessionId;
     const userMessage: Message = {
       id: `${Date.now()}-user`,
       role: "user",
       content: message,
     };
 
-    // Add user message
     setSessions((prev) =>
       prev.map((session) =>
-        session.id === currentSessionId
+        session.id === targetSessionId
           ? {
               ...session,
               messages: [...session.messages, userMessage],
@@ -111,27 +112,57 @@ export default function App() {
       )
     );
 
-    // Simulate AI typing
     setIsTyping(true);
-    
-    // Simulate API delay
-    setTimeout(() => {
+
+    try {
+      const response = await fetch("https://geni-for-finance-dev-apim.azure-api.net/echo/chatbot_trigger", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Ocp-Apim-Subscription-Key": "18a593212e3b430286388915081449a7",
+        },
+        body: JSON.stringify({
+          user_id: "Toji.Varghese@vistra.com",
+          user_message: message,
+          session_id: targetSessionId,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to connect to Azure");
+
+      const data = await response.json();
+      const formattedContent = formatChatbotOutput(data);
+
       const aiResponse: Message = {
         id: `${Date.now()}-assistant`,
         role: "assistant",
-        content: getAIResponse(message),
+        content: formattedContent,
       };
 
       setSessions((prev) =>
         prev.map((session) =>
-          session.id === currentSessionId
+          session.id === targetSessionId
             ? { ...session, messages: [...session.messages, aiResponse] }
             : session
         )
       );
-      
+    } catch (error) {
+      console.error("API Error:", error);
+      const errorMessage: Message = {
+        id: `${Date.now()}-error`,
+        role: "assistant",
+        content: "Sorry, I'm having trouble connecting to the service right now.",
+      };
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === targetSessionId
+            ? { ...session, messages: [...session.messages, errorMessage] }
+            : session
+        )
+      );
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
   };
 
   const handleFeedback = (messageId: string, feedback: "up" | "down") => {
@@ -150,7 +181,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-gray-50">
       <ChatSidebar
         sessions={sessions}
         currentSessionId={currentSessionId}
@@ -158,15 +189,16 @@ export default function App() {
         onSelectSession={handleSelectSession}
       />
       
-      <div className="flex-1 flex flex-col">
-        <div className="border-b border-gray-200 p-4 bg-white">
-          <h1 className="text-gray-900">
-            {currentSession?.title || "AI Chatbot"}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Header - Azure AI badge removed */}
+        <div className="border-b border-gray-200 p-4 flex items-center bg-white shadow-sm">
+          <h1 className="text-gray-900 font-bold">
+            {currentSession?.title || "Genie Finance Assistance"}
           </h1>
         </div>
         
         <ScrollArea className="flex-1">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto py-8 px-4">
             {currentSession?.messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -179,20 +211,14 @@ export default function App() {
             ))}
             
             {isTyping && (
-              <div className="flex gap-4 p-6 bg-gray-50">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-600">
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/>
-                    </svg>
-                  </div>
+              <div className="flex gap-4 p-6 bg-gray-50 rounded-lg animate-pulse mb-4">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+                  AI
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                  </div>
+                <div className="flex space-x-2 items-center">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-.3s]" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-.5s]" />
                 </div>
               </div>
             )}
@@ -200,7 +226,11 @@ export default function App() {
           </div>
         </ScrollArea>
         
-        <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
+        <div className="p-4 border-t bg-white">
+          <div className="max-w-4xl mx-auto">
+            <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
+          </div>
+        </div>
       </div>
     </div>
   );
