@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { ChatMessage } from "./components/ChatMessage";
 import { ChatInput } from "./components/ChatInput";
@@ -19,10 +19,8 @@ interface Session {
 }
 
 export default function App() {
-  // Helper to generate IDs consistent with the backend requirements
   const generateId = () => Math.random().toString(16).substring(2, 18);
 
-  // FIXED: Initializing state with a dynamic ID so the first session is valid
   const [sessions, setSessions] = useState<Session[]>(() => {
     const initialId = generateId();
     return [
@@ -45,7 +43,10 @@ export default function App() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const currentSession = sessions.find((s) => s.id === currentSessionId);
+  const currentSession = useMemo(() => 
+    sessions.find((s) => s.id === currentSessionId), 
+    [sessions, currentSessionId]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,6 +74,10 @@ export default function App() {
     setCurrentSessionId(sessionId);
   };
 
+  /**
+   * FORMATTER: Transforms backend JSON into a Markdown string 
+   * that ChatMessage.tsx regex can parse.
+   */
   const formatChatbotOutput = (data: any) => {
     const mainMessage = data.output?.message || "";
     const sources = data.output?.sources || {};
@@ -87,7 +92,11 @@ export default function App() {
       formatted += `\n\n**Related Documents:**\n`;
 
       const sourceBlocks = validSourceEntries.map(([key, source]: [string, any]) => {
-        return `**[${key}] ${source.source_file_title || 'Document'}**\n*Click to view citation details*\n${source.text}`;
+        // Embed the SharePoint link in parentheses so the ChatMessage regex captures it
+        const linkStr = source.sharepoint_link ? `(${source.sharepoint_link})` : "";
+        const title = source.source_file_title || 'Document';
+        
+        return `**[${key}] ${title}** ${linkStr}\n*Click to view citation details*\n${source.text}`;
       });
 
       formatted += sourceBlocks.join("\n---\n");
@@ -125,7 +134,7 @@ export default function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Ocp-Apim-Subscription-Key": "18a593212e3b430286388915081449a7",
+          "Ocp-Apim-Subscription-Key": "18a593212e3b430286388915081449a7", // Move to .env!
         },
         body: JSON.stringify({
           user_id: "aparna.kumble@vistra.com",
