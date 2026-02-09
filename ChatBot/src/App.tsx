@@ -19,22 +19,29 @@ interface Session {
 }
 
 export default function App() {
-  const [sessions, setSessions] = useState<Session[]>([
-    {
-      id: "17b95deab85984ce",
-      title: "Finance Assistance",
-      timestamp: new Date(),
-      messages: [
-        {
-          id: "welcome-1",
-          role: "assistant",
-          content: "Hello! I am your Genie Finance Assistant. How can I help you today?",
-        },
-      ],
-    },
-  ]);
+  // Helper to generate IDs consistent with the backend requirements
+  const generateId = () => Math.random().toString(16).substring(2, 18);
 
-  const [currentSessionId, setCurrentSessionId] = useState("17b95deab85984ce");
+  // FIXED: Initializing state with a dynamic ID so the first session is valid
+  const [sessions, setSessions] = useState<Session[]>(() => {
+    const initialId = generateId();
+    return [
+      {
+        id: initialId,
+        title: "Finance Assistance",
+        timestamp: new Date(),
+        messages: [
+          {
+            id: "welcome-1",
+            role: "assistant",
+            content: "Hello! I am your Genie Finance Assistant. How can I help you today?",
+          },
+        ],
+      },
+    ];
+  });
+
+  const [currentSessionId, setCurrentSessionId] = useState(() => sessions[0].id);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +52,7 @@ export default function App() {
   }, [currentSession?.messages, isTyping]);
 
   const handleNewSession = () => {
-    const newId = Math.random().toString(16).substring(2, 18);
+    const newId = generateId();
     const newSession: Session = {
       id: newId,
       title: `New Analysis`,
@@ -79,12 +86,11 @@ export default function App() {
     if (validSourceEntries.length > 0) {
       formatted += `\n\n**Related Documents:**\n`;
 
-      validSourceEntries.forEach(([key, source]: [string, any]) => {
-        formatted += `\n**[${key}] ${source.source_file_title || 'Document'}**\n`;
-        formatted += `*Click to view citation details*\n`;
-        formatted += `${source.text}\n`;
-        formatted += `---`; 
+      const sourceBlocks = validSourceEntries.map(([key, source]: [string, any]) => {
+        return `**[${key}] ${source.source_file_title || 'Document'}**\n*Click to view citation details*\n${source.text}`;
       });
+
+      formatted += sourceBlocks.join("\n---\n");
     }
 
     return formatted;
@@ -122,7 +128,7 @@ export default function App() {
           "Ocp-Apim-Subscription-Key": "18a593212e3b430286388915081449a7",
         },
         body: JSON.stringify({
-          user_id: "Toji.Varghese@vistra.com",
+          user_id: "aparna.kumble@vistra.com",
           user_message: message,
           session_id: targetSessionId,
         }),
@@ -190,7 +196,6 @@ export default function App() {
       />
       
       <div className="flex-1 flex flex-col bg-white">
-        {/* Header - Azure AI badge removed */}
         <div className="border-b border-gray-200 p-4 flex items-center bg-white shadow-sm">
           <h1 className="text-gray-900 font-bold">
             {currentSession?.title || "Genie Finance Assistance"}
