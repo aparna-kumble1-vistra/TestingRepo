@@ -43,9 +43,6 @@ export function ChatMessage({
 
   /**
    * Filter and Parse Logic
-   * 1. Extracts numbers [1][2] from the main response.
-   * 2. Captures SharePoint URLs using a robust "Until-Paren" regex.
-   * 3. Cleans titles to prevent URL leakage.
    */
   const visibleSourceItems = useMemo(() => {
     if (!sourcesRaw || isUser) return [];
@@ -59,27 +56,21 @@ export function ChatMessage({
       .map((s) => s.trim())
       .filter((s) => s.includes("[") && s.length > 10)
       .map((s) => {
-        // Robust Regex: Match everything between ( and ) that starts with http
-        // This handles complex SharePoint query parameters safely.
         const urlMatch = s.match(/\((https?:\/\/[^)]+)\)/);
         const url = urlMatch ? urlMatch[1].trim() : null;
 
-        // Clean the string: Remove the entire (http...) block so it doesn't leak into UI text
         const cleanSource = urlMatch ? s.replace(urlMatch[0], "").trim() : s;
         
         const lines = cleanSource.split("\n").map(l => l.trim()).filter(l => l !== "");
         const titleLine = lines[0] || "";
         
-        // Extract ID (the number inside the brackets)
         const idMatch = titleLine.match(/\[(.*?)\]/);
         const id = idMatch ? idMatch[1] : "";
 
-        // Filter out the title and the "Click to view" instruction to get details
         const details = lines.slice(1)
           .filter(line => !line.toLowerCase().includes("click to view"))
           .join("\n");
 
-        // Strip the [ID] from the title text for a cleaner look
         const displayTitle = titleLine.replace(/\[.*?\]/, "").trim();
 
         return { id, title: displayTitle, details, url };
@@ -103,7 +94,8 @@ export function ChatMessage({
 
       <div className="flex-1 min-w-0">
         <div className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isUser ? "text-gray-500" : "text-gray-600"}`}>
-          {isUser ? "You" : "Genie Finance Assistance"}
+          {/* Updated the AI display name here */}
+          {isUser ? "You" : "Genie for Finance"}
         </div>
 
         {/* The AI's written response */}
@@ -123,7 +115,6 @@ export function ChatMessage({
               {visibleSourceItems.map((source) => (
                 <div key={source.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:border-blue-200 transition-all">
                   <div className="flex items-center w-full">
-                    {/* Expandable Title Section */}
                     <button
                       onClick={() => toggleSource(source.id)}
                       className="flex-1 flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
@@ -135,7 +126,6 @@ export function ChatMessage({
                       {expandedSources[source.id] ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                     </button>
 
-                    {/* External Link (SharePoint) Button */}
                     {source.url && (
                       <a 
                         href={source.url} 
@@ -150,7 +140,6 @@ export function ChatMessage({
                     )}
                   </div>
                   
-                  {/* Detailed Citation Content (Hidden until expanded) */}
                   {expandedSources[source.id] && (
                     <div className="p-4 bg-gray-50 border-t border-gray-100 text-sm text-gray-700 prose prose-xs max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{source.details}</ReactMarkdown>

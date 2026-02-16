@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { AlertCircle } from "lucide-react";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { ChatMessage } from "./components/ChatMessage";
 import { ChatInput } from "./components/ChatInput";
@@ -26,13 +27,13 @@ export default function App() {
     return [
       {
         id: initialId,
-        title: "Finance Assistance",
+        title: "Genie for Finance",
         timestamp: new Date(),
         messages: [
           {
             id: "welcome-1",
             role: "assistant",
-            content: "Hello! I am your Genie Finance Assistant. How can I help you today?",
+            content: "Hello! I am your Genie for Finance assistant. How can I help you today?",
           },
         ],
       },
@@ -56,7 +57,7 @@ export default function App() {
     const newId = generateId();
     const newSession: Session = {
       id: newId,
-      title: `New Analysis`,
+      title: "New Analysis",
       timestamp: new Date(),
       messages: [
         {
@@ -74,10 +75,6 @@ export default function App() {
     setCurrentSessionId(sessionId);
   };
 
-  /**
-   * FORMATTER: Transforms backend JSON into a Markdown string 
-   * that ChatMessage.tsx regex can parse.
-   */
   const formatChatbotOutput = (data: any) => {
     const mainMessage = data.output?.message || "";
     const sources = data.output?.sources || {};
@@ -90,18 +87,13 @@ export default function App() {
 
     if (validSourceEntries.length > 0) {
       formatted += `\n\n**Related Documents:**\n`;
-
       const sourceBlocks = validSourceEntries.map(([key, source]: [string, any]) => {
-        // Embed the SharePoint link in parentheses so the ChatMessage regex captures it
         const linkStr = source.sharepoint_link ? `(${source.sharepoint_link})` : "";
         const title = source.source_file_title || 'Document';
-        
         return `**[${key}] ${title}** ${linkStr}\n*Click to view citation details*\n${source.text}`;
       });
-
       formatted += sourceBlocks.join("\n---\n");
     }
-
     return formatted;
   };
 
@@ -121,7 +113,7 @@ export default function App() {
           ? {
               ...session,
               messages: [...session.messages, userMessage],
-              title: session.messages.length === 1 ? message.slice(0, 30) : session.title,
+              title: session.messages.length <= 1 ? message.slice(0, 30) : session.title,
             }
           : session
       )
@@ -134,7 +126,7 @@ export default function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Ocp-Apim-Subscription-Key": "18a593212e3b430286388915081449a7", // Move to .env!
+          "Ocp-Apim-Subscription-Key": "18a593212e3b430286388915081449a7",
         },
         body: JSON.stringify({
           user_id: "aparna.kumble@vistra.com",
@@ -143,7 +135,7 @@ export default function App() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to connect to Azure");
+      if (!response.ok) throw new Error("Failed to connect");
 
       const data = await response.json();
       const formattedContent = formatChatbotOutput(data);
@@ -162,7 +154,6 @@ export default function App() {
         )
       );
     } catch (error) {
-      console.error("API Error:", error);
       const errorMessage: Message = {
         id: `${Date.now()}-error`,
         role: "assistant",
@@ -205,12 +196,14 @@ export default function App() {
       />
       
       <div className="flex-1 flex flex-col bg-white">
+        {/* Header */}
         <div className="border-b border-gray-200 p-4 flex items-center bg-white shadow-sm">
           <h1 className="text-gray-900 font-bold">
-            {currentSession?.title || "Genie Finance Assistance"}
+            {currentSession?.title || "Genie for Finance"}
           </h1>
         </div>
         
+        {/* Chat Area */}
         <ScrollArea className="flex-1">
           <div className="max-w-4xl mx-auto py-8 px-4">
             {currentSession?.messages.map((message) => (
@@ -226,8 +219,8 @@ export default function App() {
             
             {isTyping && (
               <div className="flex gap-4 p-6 bg-gray-50 rounded-lg animate-pulse mb-4">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
-                  AI
+                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow-sm">
+                  <span className="text-xl" role="img" aria-label="robot">🤖</span>
                 </div>
                 <div className="flex space-x-2 items-center">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
@@ -240,9 +233,20 @@ export default function App() {
           </div>
         </ScrollArea>
         
+        {/* Input & Footer */}
         <div className="p-4 border-t bg-white">
           <div className="max-w-4xl mx-auto">
             <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
+            
+            <footer className="mt-4 flex items-center justify-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
+              <p 
+                className="text-[11px] text-gray-400 tracking-wide uppercase"
+                style={{ fontStyle: 'italic', fontWeight: 'normal' }}
+              >
+                All answers are AI generated and should be reviewed
+              </p>
+            </footer>
           </div>
         </div>
       </div>
