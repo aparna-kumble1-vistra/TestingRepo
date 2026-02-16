@@ -197,11 +197,11 @@ export default function App() {
       
       <div className="flex-1 flex flex-col bg-white">
         {/* Header */}
-        <div className="border-b border-gray-200 p-4 flex items-center bg-white shadow-sm">
-          <h1 className="text-gray-900 font-bold">
+        <header className="border-b border-gray-100 p-4 flex items-center bg-white shadow-sm z-10">
+          <h1 className="text-gray-900 font-bold tracking-tight">
             {currentSession?.title || "Genie for Finance"}
           </h1>
-        </div>
+        </header>
         
         {/* Chat Area */}
         <ScrollArea className="flex-1">
@@ -218,14 +218,14 @@ export default function App() {
             ))}
             
             {isTyping && (
-              <div className="flex gap-4 p-6 bg-gray-50 rounded-lg animate-pulse mb-4">
-                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow-sm">
+              <div className="flex gap-4 p-6 bg-slate-50/50 rounded-xl animate-pulse mb-4 border border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shadow-sm">
                   <span className="text-xl" role="img" aria-label="robot">🤖</span>
                 </div>
                 <div className="flex space-x-2 items-center">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-.3s]" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-.5s]" />
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" />
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:-.3s]" />
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:-.5s]" />
                 </div>
               </div>
             )}
@@ -234,16 +234,13 @@ export default function App() {
         </ScrollArea>
         
         {/* Input & Footer */}
-        <div className="p-4 border-t bg-white">
+        <div className="p-4 border-t border-gray-100 bg-white">
           <div className="max-w-4xl mx-auto">
             <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
             
-            <footer className="mt-4 flex items-center justify-center gap-1.5">
+            <footer className="mt-4 flex items-center justify-center gap-1.5 select-none">
               <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
-              <p 
-                className="text-[11px] text-gray-400 tracking-wide uppercase"
-                style={{ fontStyle: 'italic', fontWeight: 'normal' }}
-              >
+              <p className="text-xs text-gray-400">
                 All answers are AI generated and should be reviewed
               </p>
             </footer>
